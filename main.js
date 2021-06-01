@@ -41,9 +41,9 @@
     function CISCOgetQuestion() {
         if (fyzsdebugpage == 121)
             return document.getElementById("question").innerText.trimStart().trimEnd();
-        for (const e of document.getElementsByClassName("question")) { 
+        for (const e of document.getElementsByClassName("question")) {
             if (!e.className.includes("hidden")) {
-                return e.getElementsByClassName("mattext")[0].innerText;
+                return e.getElementsByClassName("mattext")[0].innerText.trimStart().trimEnd();
             }
         }
     }
@@ -72,30 +72,53 @@
 
     let iframe = new IFrame();
 
-    document.addEventListener("keypress", async (k) => {
-        if (k.key == ".") {
-            if (iframe.visible) {
-                iframe.setVisible(false);
-            } else {
-                iframe.setVisible(true);
-                let str;
-                try {
-                    iframe.setSource(URLObjectFromHTML(CISCOgetQuestion()))
-                    let res = await httpRequest(`https://itexamanswers.net/?s=${encodeURIComponent(CISCOgetQuestion())}`, "GET")
-                    let url = ITEAparseFirstResult(res.responseText);
-                    if (url) {
-                        res = await httpRequest(url, "GET");
-                        let idx = res.response.search(CISCOgetQuestion());
-                        str = insertStringAtIdx(idx, res.response, `<a id="jumphere"></a><script>window.location.hash="jumphere"</script>"`)
-                    } else {
-                        str = "question answer not found";
-                    }
-                } catch (error) {
-                    str = `${error.name}<br>${error.message}`;
+    async function handleActivation(k) {
+        if (iframe.visible) {
+            iframe.setVisible(false);
+        } else {
+            iframe.setVisible(true);
+            let str;
+            try {
+                iframe.setSource(URLObjectFromHTML(CISCOgetQuestion()))
+                let res = await httpRequest(`https://itexamanswers.net/?s=${encodeURIComponent(CISCOgetQuestion())}`, "GET")
+                let url = ITEAparseFirstResult(res.responseText);
+                if (url) {
+                    res = await httpRequest(url, "GET");
+                    let idx = res.response.indexOf(CISCOgetQuestion());
+                    str = insertStringAtIdx(idx, res.response, `<a id="jumphere"></a>`);
+                    str += `<script>window.location.hash="jumphere"</script>`;
+                } else {
+                    return iframe.setSource(`https://google.com/search?q=${CISCOgetQuestion()}`)
                 }
-                iframe.setSource(URLObjectFromHTML(str))
+            } catch (error) {
+                str = `${error.name}<br>${error.message}`;
             }
+            iframe.setSource(URLObjectFromHTML(str));
         }
+    }
+
+    document.addEventListener("keypress", (k)=>{
+        if (k.key == ".")
+            handleActivation();
     });
-    //What three voltages are commonly provided by the power supply to the various components inside the computer? (Choose three.)
+
+    let t = null;
+    let didActivate = false;
+
+    document.addEventListener("mousedown", (ev) =>{
+        if (ev.button == 2) {
+            t = setTimeout(()=>{
+                didActivate = true;
+                handleActivation();
+            }, 1000);
+        }
+    })
+
+    document.oncontextmenu = (ev) => {
+        clearTimeout(t);
+        let o = didActivate;
+        didActivate = false;
+        if (o)
+            return false;
+    }
 })();
