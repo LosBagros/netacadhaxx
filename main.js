@@ -1,13 +1,15 @@
 (async ()=>{
     /* IFrame crap */
     class IFrame {
-        iframe = null
+        iframe = null;
+        visible = false;
 
         constructor(src=undefined, visible=false) {
             this.iframe = document.createElement("iframe");
-            this.iframe.className = "iframe-container";
+            this.iframe.style = "position: fixed; top: 10vw; right: 1vw; width: 45vw; height: 45vh;";
             if (src)
                 this.setSource(src);
+            this.visible = visible;
             if (visible)
                 this.setVisible(visible)
         }
@@ -17,6 +19,7 @@
         }
 
         setVisible(visible) {
+            this.visible = visible;
             if (visible)
                 document.body.appendChild(this.iframe);
             else
@@ -36,7 +39,13 @@
 
     /* cisco test crap */
     function CISCOgetQuestion() {
-        return document.getElementById("question").innerText.trimStart().trimEnd();
+        if (fyzsdebugpage == 121)
+            return document.getElementById("question").innerText.trimStart().trimEnd();
+        for (const e of document.getElementsByClassName("question")) { 
+            if (!e.className.includes("hidden")) {
+                return e.getElementsByClassName("mattext")[0].innerText;
+            }
+        }
     }
 
     /* other*/
@@ -60,17 +69,33 @@
     }
 
     /* code that glues above together */
-    let iframe = new IFrame(undefined, true)
-    let res = await httpRequest(`https://itexamanswers.net/?s=${CISCOgetQuestion()}`, "GET")
-    let url = ITEAparseFirstResult(res.responseText);
-    res = await httpRequest(url, "GET");
-    let idx = res.response.search(CISCOgetQuestion());
-    let str = insertStringAtIdx(idx, res.response, `<a id="jumphere"></a><script>window.location.hash="jumphere"</script>"`)
-    console.log(idx)
-    iframe.setSource(URLObjectFromHTML(str))
 
-    /*new IFrame(URLObjectFromHTML(res.response), true)*/
-    /*let iframe = new IFrame(`https://itexamanswers.net/?s=${getQuestion()}`, true);
-    setTimeout(()=>iframe.setVisible(false), 2000);
-    setTimeout(()=>iframe.setVisible(true), 4000);*/
+    let iframe = new IFrame();
+
+    document.addEventListener("keypress", async (k) => {
+        if (k.key == ".") {
+            if (iframe.visible) {
+                iframe.setVisible(false);
+            } else {
+                iframe.setVisible(true);
+                let str;
+                try {
+                    iframe.setSource(URLObjectFromHTML(CISCOgetQuestion()))
+                    let res = await httpRequest(`https://itexamanswers.net/?s=${encodeURIComponent(CISCOgetQuestion())}`, "GET")
+                    let url = ITEAparseFirstResult(res.responseText);
+                    if (url) {
+                        res = await httpRequest(url, "GET");
+                        let idx = res.response.search(CISCOgetQuestion());
+                        str = insertStringAtIdx(idx, res.response, `<a id="jumphere"></a><script>window.location.hash="jumphere"</script>"`)
+                    } else {
+                        str = "question answer not found";
+                    }
+                } catch (error) {
+                    str = `${error.name}<br>${error.message}`;
+                }
+                iframe.setSource(URLObjectFromHTML(str))
+            }
+        }
+    });
+    //What three voltages are commonly provided by the power supply to the various components inside the computer? (Choose three.)
 })();
