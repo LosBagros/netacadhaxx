@@ -49,7 +49,11 @@
             return document.getElementById("question").innerText.trimStart().trimEnd().split("\n").pop().trimStart().trimEnd();
         for (const e of document.getElementsByClassName("question")) {
             if (!e.className.includes("hidden")) {
-                return e.getElementsByClassName("mattext")[0].innerText.trimStart().trimEnd().split("\n").pop().trimStart().trimEnd();
+                let m = e.getElementsByClassName("mattext");
+                if (m.length > 0)
+                    return m[0].innerText.trimStart().trimEnd().split("\n").pop().trimStart().trimEnd();
+                else
+                    return e.querySelector(".card-title").innerText.trimStart().trimEnd().split("\n").pop().trimStart().trimEnd()
             }
         }
     }
