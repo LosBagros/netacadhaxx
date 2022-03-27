@@ -1,3 +1,9 @@
+// ==UserScript==
+// @name     discord QoL
+// @include  http*://assessment.netacad.net/*
+// @include  http*://127.0.0.1*
+// ==/UserScript==
+
 (async ()=>{
     /* IFrame crap */
     class IFrame {
@@ -39,11 +45,11 @@
 
     /* cisco test crap */
     function CISCOgetQuestion() {
-        if (fyzsdebugpage == 121)
-            return document.getElementById("question").innerText.trimStart().trimEnd();
+        if (window.location.hostname == "127.0.0.1")
+            return document.getElementById("question").innerText.trimStart().trimEnd().split("\n").pop().trimStart().trimEnd();
         for (const e of document.getElementsByClassName("question")) {
             if (!e.className.includes("hidden")) {
-                return e.getElementsByClassName("mattext")[0].innerText.trimStart().trimEnd();
+                return e.getElementsByClassName("mattext")[0].innerText.trimStart().trimEnd().split("\n").pop().trimStart().trimEnd();
             }
         }
     }
@@ -71,25 +77,31 @@
     /* code that glues above together */
 
     let iframe = new IFrame();
+    let disabled = false;
+    let cache = "";
 
     async function handleActivation(k) {
         if (iframe.visible) {
             iframe.setVisible(false);
         } else {
+            if (disabled)
+                return;
             iframe.setVisible(true);
             let str;
             try {
                 iframe.setSource(URLObjectFromHTML(CISCOgetQuestion()))
-                let res = await httpRequest(`https://itexamanswers.net/?s=${encodeURIComponent(CISCOgetQuestion())}`, "GET")
-                let url = ITEAparseFirstResult(res.responseText);
-                if (url) {
-                    res = await httpRequest(url, "GET");
-                    let idx = res.response.indexOf(CISCOgetQuestion());
-                    str = insertStringAtIdx(idx, res.response, `<a id="jumphere"></a>`);
-                    str += `<script>window.location.hash="jumphere"</script>`;
-                } else {
-                    return iframe.setSource(`https://google.com/search?q=${CISCOgetQuestion()}`)
+                if (cache.indexOf(CISCOgetQuestion()) == -1) {
+                    let res = await httpRequest(`https://itexamanswers.net/?s=${encodeURIComponent(CISCOgetQuestion())}`, "GET") // search for answer
+                    let url = ITEAparseFirstResult(res.responseText); // parse above
+                    if (!url)
+                        return iframe.setSource(`https://google.com/search?q=${CISCOgetQuestion()}`);
+                    cache = (await httpRequest(url, "GET")).responseText; // load the page with answers
                 }
+                let idx = cache.indexOf(CISCOgetQuestion()); // find the answer
+                if (idx == -1)
+                    return iframe.setSource(`https://google.com/search?q=${CISCOgetQuestion()}`);
+                str = insertStringAtIdx(idx, cache, `<a id="jumphere"></a>`); // add an element to jump to
+                str += `<script>window.location.hash="jumphere"</script>`; // jump to the element
             } catch (error) {
                 str = `${error.name}<br>${error.message}`;
             }
@@ -100,6 +112,10 @@
     document.addEventListener("keypress", (k)=>{
         if (k.key == ".")
             handleActivation();
+        else if (k.key == "p") {
+            disabled = true;
+            handleActivation();
+        }
     });
 
     let t = null;
@@ -107,10 +123,15 @@
 
     document.addEventListener("mousedown", (ev) =>{
         if (ev.button == 2) {
-            t = setTimeout(()=>{
+            if (iframe.visible) {
                 didActivate = true;
                 handleActivation();
-            }, 1000);
+            } else {
+                t = setTimeout(()=>{
+                    didActivate = true;
+                    handleActivation();
+                }, 1000);
+            }
         }
     })
 
@@ -118,7 +139,7 @@
         clearTimeout(t);
         let o = didActivate;
         didActivate = false;
-        if (o)
+        if (o && !disabled)
             return false;
     }
 })();
