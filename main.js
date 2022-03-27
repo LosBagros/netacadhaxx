@@ -34,7 +34,7 @@
     }
 
     /* itexamanswers.net crap */
-    const ITEAgetResultsRegEX = /(?:title front-view-title)(?:.*?)(?:href=")(.*?)(?:")/gm
+    const ITEAgetResultsRegEX = /title front-view-title(?:.*?)<a(?:.*?)href=([a-zA-Z0-9:\/\.-]*)/gm
 
     function ITEAparseFirstResult(html) {
         let matches = [...html.matchAll(ITEAgetResultsRegEX)]
