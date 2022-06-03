@@ -104,7 +104,6 @@
                     let dp = new DOMParser();
                     let doc = dp.parseFromString(cache, "text/html"); // parse the html
 
-                    console.log("hi");
                     doc.querySelectorAll("script").forEach(x => {
                         if (x.innerHTML.includes("ez-cookie-dialog-wrapper"))
                             x.parentNode.removeChild(x);
