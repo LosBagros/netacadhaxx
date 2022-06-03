@@ -100,6 +100,19 @@
                     if (!url)
                         return iframe.setSource(`https://google.com/search?q=${CISCOgetQuestion()}`);
                     cache = (await httpRequest(url, "GET")).responseText; // load the page with answers
+
+                    let dp = new DOMParser();
+                    let doc = dp.parseFromString(cache, "text/html"); // parse the html
+
+                    console.log("hi");
+                    doc.querySelectorAll("script").forEach(x => {
+                        if (x.innerHTML.includes("ez-cookie-dialog-wrapper"))
+                            x.parentNode.removeChild(x);
+                    });
+                    // remove all                     side arrows                    jump to comment section    elements
+                    [...doc.getElementsByClassName("wpnp_anchor_js"), doc.getElementById("wpd-bubble-wrapper")].forEach(x => x.parentNode.removeChild(x));
+
+                    cache = "<html>" + doc.documentElement.innerHTML + "</html>";
                 }
                 let idx = cache.indexOf(CISCOgetQuestion()); // find the answer
                 if (idx == -1)
