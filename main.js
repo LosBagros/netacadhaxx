@@ -110,7 +110,8 @@
                     });
                     // remove all                     side arrows                    jump to comment section    elements
                     [...doc.getElementsByClassName("wpnp_anchor_js"), doc.getElementById("wpd-bubble-wrapper")].forEach(x => x.parentNode.removeChild(x));
-
+                    doc.getElementById("ezmobfooter").remove();
+                    
                     cache = "<html>" + doc.documentElement.innerHTML + "</html>";
                 }
                 let idx = cache.indexOf(CISCOgetQuestion()); // find the answer
