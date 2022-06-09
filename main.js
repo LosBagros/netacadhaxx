@@ -129,7 +129,7 @@
         if (k.key == ".")
             handleActivation();
         else if (k.key == "p") {
-            disabled = true;
+            disabled = disabled ? false : true;
             handleActivation();
         }
     });
