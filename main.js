@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name     discord QoL
+// @name     netacad exam
 // @include  http*://assessment.netacad.net/*
 // @include  http*://127.0.0.1*
 // ==/UserScript==
@@ -12,7 +12,7 @@
 
         constructor(src=undefined, visible=false) {
             this.iframe = document.createElement("iframe");
-            this.iframe.style = "position: fixed; top: 10vw; right: 1vw; width: 45vw; height: 45vh;";
+            this.iframe.style = "position: fixed; bottom: 5vw; left: 50%; width: 20vw; height: 20vh; transform: translate(-50%,0);"; //opacity:0.3;
             if (src)
                 this.setSource(src);
             this.visible = visible;
@@ -105,19 +105,25 @@
                     let doc = dp.parseFromString(cache, "text/html"); // parse the html
 
                     doc.querySelectorAll("script").forEach(x => {
-                        if (x.innerHTML.includes("ez-cookie-dialog-wrapper"))
+                        if (x.innerHTML.includes("ez-cookie-dialog-wrapper") || x.innerHTML.includes("ezodn") || x.innerHTML.includes("connatix") || x.innerHTML.includes("google"))
                             x.parentNode.removeChild(x);
                     });
-                    // remove all                     side arrows                    jump to comment section    elements
-                    [...doc.getElementsByClassName("wpnp_anchor_js"), doc.getElementById("wpd-bubble-wrapper")].forEach(x => x.parentNode.removeChild(x));
-                    doc.getElementById("ezmobfooter").remove();
+                    doc.getElementById("wpd-bubble-wrapper").remove();
                     
+                    doc.querySelectorAll("span").forEach(x => {
+                        if(x.style.color != "red"){
+                           x.remove();
+                        }
+                    });
+
+                    [...doc.getElementsByClassName('message_box')].forEach(x => x.parentNode.removeChild(x));
                     cache = "<html>" + doc.documentElement.innerHTML + "</html>";
+
                 }
                 let idx = cache.indexOf(CISCOgetQuestion()); // find the answer
                 if (idx == -1)
                     return iframe.setSource(`https://google.com/search?q=${CISCOgetQuestion()}`);
-                str = insertStringAtIdx(idx, cache, `<a id="jumphere"></a>`); // add an element to jump to
+                str = insertStringAtIdx(idx, cache, `<p id="jumphere"></p>`); // add an element to jump to                
                 str += `<script>window.location.hash="jumphere"</script>`; // jump to the element
             } catch (error) {
                 str = `${error.name}<br>${error.message}`;
@@ -133,30 +139,5 @@
             disabled = disabled ? false : true;
             handleActivation();
         }
-    });
-
-    let t = null;
-    let didActivate = false;
-
-    document.addEventListener("mousedown", (ev) =>{
-        if (ev.button == 2) {
-            if (iframe.visible) {
-                didActivate = true;
-                handleActivation();
-            } else {
-                t = setTimeout(()=>{
-                    didActivate = true;
-                    handleActivation();
-                }, 1000);
-            }
-        }
-    })
-
-    document.oncontextmenu = (ev) => {
-        clearTimeout(t);
-        let o = didActivate;
-        didActivate = false;
-        if (o && !disabled)
-            return false;
-    }
+    });    
 })();
