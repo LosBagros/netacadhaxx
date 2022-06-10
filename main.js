@@ -131,7 +131,11 @@
             iframe.setSource(URLObjectFromHTML(str));
         }
     }
-
+   document.addEventListener('mousedown', (event) => {
+    if (event.button == 1 || event.buttons == 4) {
+      handleActivation();
+   }
+});
     document.addEventListener("keypress", (k)=>{
         if (k.key == ".")
             handleActivation();
